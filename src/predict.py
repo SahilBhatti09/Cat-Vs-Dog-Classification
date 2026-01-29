@@ -169,3 +169,95 @@ def predict_frame(model, frame, target_size=(64, 64)):
     
     # Return raw probability
     return prediction[0][0]
+
+
+def run_webcam_prediction(model, target_size=(64, 64), camera_id=0, window_name="Webcam Prediction"):
+    """
+    Run real-time webcam prediction with image capture functionality
+    
+    Args:
+        model: Trained Keras model
+        target_size (tuple): Target image size for model input
+        camera_id (int): Camera device ID (default: 0 for built-in webcam)
+        window_name (str): Name of the OpenCV window
+    
+    Controls:
+        - Press 'c' to capture and save the current frame
+        - Press 'q' to quit
+    
+    Returns:
+        None
+    
+    Note:
+        Captured images are saved in the current directory with timestamp
+        Format: capture_YYYYMMDD_HHMMSS.jpg
+    """
+    import time
+    
+    # Initialize webcam
+    cap = cv2.VideoCapture(camera_id)
+    
+    if not cap.isOpened():
+        print("Error: Could not open webcam")
+        return
+    
+    print("Webcam started!")
+    print("Controls:")
+    print("  - Press 'c' to capture and save frame")
+    print("  - Press 'q' to quit")
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Failed to capture frame")
+            break
+        
+        # Get prediction
+        prob = predict_frame(model, frame, target_size)
+        
+        # Determine label and confidence
+        label = "Dog" if prob > 0.5 else "Cat"
+        confidence = prob if prob > 0.5 else 1 - prob
+        
+        # Display prediction on frame
+        cv2.putText(
+            frame,
+            f"Prediction: {label}",
+            (20, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2
+        )
+        
+        cv2.putText(
+            frame,
+            f"Confidence: {confidence:.2f}",
+            (20, 80),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            (0, 255, 0),
+            2
+        )
+        
+        # Display frame
+        cv2.imshow(window_name, frame)
+        
+        # Handle key presses
+        key = cv2.waitKey(1) & 0xFF
+        
+        # Capture frame on 'c' key
+        if key == ord('c'):
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"capture_{timestamp}.jpg"
+            cv2.imwrite(filename, frame)
+            print(f"📸 Saved {filename}")
+        
+        # Quit on 'q' key
+        elif key == ord('q'):
+            break
+    
+    # Cleanup
+    cap.release()
+    cv2.destroyAllWindows()
+    print("Webcam closed")

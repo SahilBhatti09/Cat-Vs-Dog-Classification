@@ -15,7 +15,7 @@ This project implements a binary image classification system using a CNN to dist
 - **Visualization**: Sample image display and training metrics
 - **Model Persistence**: Save and load trained models
 - **Prediction Function**: Easy-to-use prediction for new images
-- **Real-time Webcam Prediction**: Live cat/dog classification using webcam feed
+- **Real-time Webcam Prediction**: Live cat/dog classification using webcam feed with image capture
 - **Dropout & L2 Regularization**: Prevents overfitting
 - **Training Visualization**: Loss and accuracy plots
 
@@ -135,7 +135,7 @@ jupyter notebook catVsdog.ipynb
 from src.data_loader import load_data, preprocess_images
 from src.model import create_cnn_model
 from src.train import train_model
-from src.predict import predict_single_image
+from src.predict import predict_single_image, run_webcam_prediction
 
 # Load data
 x_train, x_test, y_train, y_test = load_data('dataset/')
@@ -146,9 +146,12 @@ model = create_cnn_model(input_shape=(64, 64, 3))
 # Train model
 history = train_model(model, x_train, y_train, x_test, y_test)
 
-# Predict
+# Predict on a single image
 result = predict_single_image(model, 'test cases/cat1.jpg')
 print(f"Prediction: {result}")
+
+# Run webcam prediction with capture functionality
+run_webcam_prediction(model)  # Press 'c' to capture, 'q' to quit
 ```
 
 ## Training
@@ -205,7 +208,7 @@ results = predict_batch(model, test_images)
 
 ### Real-time Webcam Prediction
 
-The project includes real-time webcam prediction functionality:
+The project includes real-time webcam prediction functionality with image capture:
 
 **Using the Webcam Notebook:**
 
@@ -215,12 +218,34 @@ jupyter notebook webCam.ipynb
 ```
 
 2. Run all cells to start the webcam and see real-time predictions
-3. Press 'q' to quit the webcam feed
+3. **Press 'c' to capture and save the current frame** (saved with timestamp: `capture_YYYYMMDD_HHMMSS.jpg`)
+4. Press 'q' to quit the webcam feed
+
+**Features:**
+- Live cat/dog classification with confidence scores
+- Real-time prediction overlay on video feed
+- One-key image capture for saving interesting predictions
+- Automatic timestamped file naming
+
+**Using Python Code:**
+
+```python
+from tensorflow import keras
+from src.predict import run_webcam_prediction
+
+# Load the trained model
+model = keras.models.load_model("models/cnn_model.keras")
+
+# Start webcam prediction with capture
+run_webcam_prediction(model)
+# Press 'c' to capture frames, 'q' to quit
+```
 
 **Note:** 
 - Make sure you have opencv-python installed (already in requirements.txt)
 - The webcam prediction uses the same preprocessing as training (BGR→RGB conversion, normalization)
 - Works with both built-in and external webcams
+- Captured images are saved in the current directory with timestamp format: `capture_YYYYMMDD_HHMMSS.jpg`
 
 ## Code Structure
 
@@ -236,15 +261,16 @@ jupyter notebook webCam.ipynb
 **webCam.ipynb** - Real-time prediction notebook with:
 1. Webcam integration using OpenCV
 2. Live frame processing and prediction
-3. Real-time display with prediction labels
-4. `predict_frame()` function for video frames
+3. Real-time display with prediction labels and confidence scores
+4. Image capture functionality (press 'c' to save frame)
+5. `predict_frame()` function for video frames
 
 ### Python Modules (src/)
 Reusable code organized into modules:
 - `data_loader.py`: Data handling and image preprocessing
 - `model.py`: CNN model architecture definition
 - `train.py`: Training pipeline with callbacks
-- `predict.py`: Prediction utilities (images and webcam frames)
+- `predict.py`: Prediction utilities (images, webcam frames, and capture functionality)
 - `utils.py`: Visualization and evaluation helpers
 
 ## Potential Enhancements
